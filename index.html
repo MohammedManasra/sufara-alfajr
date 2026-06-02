@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>سفراء الفجر</title>
+<style>
+:root{
+  --main:#325c68;
+  --accent:#2b9e8f;
+  --bg:#f3f7f8;
+  --card:#ffffff;
+  --danger:#d9534f;
+  --warn:#f0ad4e;
+  --text:#22313a;
+  --line:#e3eaed;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Tahoma,Arial,sans-serif;background:var(--bg);color:var(--text)}
+header{background:linear-gradient(135deg,var(--main),var(--accent));color:#fff;padding:24px 14px;text-align:center}
+header h1{margin:0;font-size:30px}
+header p{margin:8px 0 0;opacity:.95}
+.wrap{max-width:1120px;margin:18px auto;padding:0 12px}
+.card{background:var(--card);border-radius:18px;box-shadow:0 6px 18px rgba(0,0,0,.07);padding:16px;margin-bottom:16px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+input,select,textarea,button{font-family:inherit;font-size:15px}
+input,select,textarea{border:1px solid var(--line);border-radius:11px;padding:10px;background:#fff}
+textarea{width:100%;min-height:80px;resize:vertical}
+button{border:0;border-radius:11px;padding:10px 14px;background:var(--accent);color:#fff;cursor:pointer;font-weight:700}
+button.secondary{background:var(--main)}
+button.light{background:#eef4f5;color:var(--main)}
+button.danger{background:var(--danger)}
+table{width:100%;border-collapse:collapse;overflow:hidden;border-radius:14px}
+th,td{border-bottom:1px solid var(--line);padding:10px;text-align:center}
+th{background:#edf6f5;color:var(--main)}
+.name{text-align:right;font-weight:700}
+.stat-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{border:1px solid var(--line);background:#f9fbfc;border-radius:15px;padding:14px;text-align:center}
+.stat b{display:block;color:var(--main);font-size:25px;margin-top:5px}
+.badge{display:inline-block;border-radius:999px;padding:5px 10px;background:var(--accent);color:#fff;font-size:13px}
+.badge.danger{background:var(--danger)}
+.hidden{display:none!important}
+.tabs{display:flex;gap:8px;flex-wrap:wrap}
+.small{font-size:13px;color:#60717a;line-height:1.8}
+.hr{height:1px;background:var(--line);margin:14px 0}
+.choice{display:inline-flex;align-items:center;gap:5px;margin:2px 7px;white-space:nowrap}
+.noteBox{background:#f6fbfa;border:1px solid #dcebe8;border-radius:14px;padding:14px;line-height:1.9}
+
+.knightsCard{text-align:center;background:linear-gradient(180deg,#ffffff,#f4fbfa)}
+.knightsCard h2{color:var(--main);margin-top:0}
+.knightsImg{max-width:100%;border-radius:18px;border:1px solid var(--line);box-shadow:0 4px 12px rgba(0,0,0,.08);margin:10px 0}
+.knightsNames{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.knightName{background:#eef7f5;color:var(--main);border:1px solid #d8ebe7;padding:8px 12px;border-radius:999px;font-weight:700}
+.warnText{color:var(--danger);font-weight:700}
+.footer{text-align:center;color:#60717a;font-size:13px;padding:22px}
+@media(max-width:720px){
+  header h1{font-size:24px}
+  th,td{font-size:13px;padding:8px 5px}
+  .choice{display:block;margin:6px 0}
+  .row>*{width:100%}
+  button{width:100%}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>سفراء الفجر</h1>
+  <p>متابعة صلاة الفجر — المشرف والطلاب</p>
+</header>
+
+<div class="wrap">
+
+<section id="loginCard" class="card">
+  <h2>تسجيل الدخول</h2>
+  <p class="small">يدخل المشرف أو الطالب بالبريد وكلمة المرور.</p>
+  <div class="row">
+    <input id="email" type="email" placeholder="البريد الإلكتروني">
+    <input id="password" type="password" placeholder="كلمة المرور">
+    <button onclick="login()">دخول</button>
+  </div>
+  <p id="loginMsg" class="small warnText"></p>
+</section>
+
+<section id="topBar" class="card hidden">
+  <div class="row">
+    <b id="welcome"></b>
+    <button class="light" onclick="logout()">تسجيل خروج</button>
+  </div>
+</section>
+
+<section id="knightsView" class="card knightsCard hidden">
+  <h2 id="knightsTitle">فرسان الفجر</h2>
+  <img id="knightsImage" class="knightsImg hidden" alt="فرسان الفجر">
+  <div id="knightsNames" class="knightsNames"></div>
+</section>
+
+<section id="adminPanel" class="hidden">
+  <div class="card">
+    <h2>لوحة المشرف</h2>
+    <div class="tabs">
+      <button onclick="showAdminTab('adminDaily')">تسجيل الفجر</button>
+      <button class="secondary" onclick="showAdminTab('adminRanking')">الترتيب</button>
+      <button class="secondary" onclick="showAdminTab('adminNotes')">الملحوظات</button>
+      <button class="secondary" onclick="showAdminTab('adminKnights')">فرسان الفجر</button>
+      <button class="light" onclick="seedStudents()">تهيئة بيانات الطلاب</button>
+    </div>
+    <p class="small">إذا سجّل المشرف والطالب نفس اليوم بشكل مختلف، يتم اعتماد تسجيل المشرف.</p>
+  </div>
+
+  <div id="adminDaily" class="card">
+    <h2>تسجيل اليوم</h2>
+    <div class="row">
+      <label>التاريخ:</label>
+      <input id="adminDate" type="date" onchange="loadAdminDaily()">
+      <button onclick="saveAdminDaily()">حفظ تسجيل المشرف</button>
+    </div>
+    <br>
+    <table>
+      <thead><tr><th>الطالب</th><th>تسجيل الطالب</th><th>تسجيل المشرف المعتمد</th></tr></thead>
+      <tbody id="adminDailyRows"></tbody>
+    </table>
+  </div>
+
+  <div id="adminRanking" class="card hidden">
+    <h2>لوحة الترتيب</h2>
+    <div class="row">
+      <label>ترتيب حسب:</label>
+      <select id="rankBy" onchange="renderAdminRanking()">
+        <option value="points">النقاط</option>
+        <option value="masjid">عدد مرات المسجد</option>
+      </select>
+    </div>
+    <br>
+    <div id="adminStats" class="stat-grid"></div>
+    <br>
+    <table>
+      <thead><tr><th>الترتيب</th><th>الطالب</th><th>المسجد</th><th>البيت</th><th>لم يصلِّ</th><th>النقاط</th><th>وسام الأسبوع</th></tr></thead>
+      <tbody id="adminRankingRows"></tbody>
+    </table>
+  </div>
+
+  <div id="adminNotes" class="card hidden">
+    <h2>ملحوظات الطلاب</h2>
+    <p class="small">الملحوظة لا تظهر إلا للطالب نفسه.</p>
+    <div id="notesList"></div>
+  </div>
+
+  <div id="adminKnights" class="card hidden">
+    <h2>إدارة فرسان الفجر</h2>
+    <p class="small">ضع رابط صورة فرسان الفجر، ثم أسماء الفرسان. سيظهر القسم للمشرف والطلاب بعد تسجيل الدخول.</p>
+    <label>العنوان</label>
+    <input id="knightsAdminTitle" style="width:100%" placeholder="فرسان الفجر - شهر مايو">
+    <br><br>
+    <label>رابط الصورة</label>
+    <input id="knightsAdminImage" style="width:100%" placeholder="https://.../image.jpg">
+    <br><br>
+    <label>أسماء الفرسان - كل اسم في سطر</label>
+    <textarea id="knightsAdminNames" placeholder="محمد أبو لبدة&#10;يامن أبو صلاح&#10;كنان السري"></textarea>
+    <br><br>
+    <button onclick="saveKnights()">حفظ فرسان الفجر</button>
+  </div>
+
+</section>
+
+<section id="studentPanel" class="hidden">
+  <div class="card">
+    <h2 id="studentTitle">صفحة الطالب</h2>
+    <div class="stat-grid" id="studentStats"></div>
+    <div class="hr"></div>
+    <h3>ملحوظة المشرف</h3>
+    <div id="studentNote" class="noteBox"></div>
+  </div>
+
+  <div class="card">
+    <h2>تسجيل صلاة الفجر</h2>
+    <p class="small">يمكنك تسجيل صلاتك، وإذا سجّل المشرف فسيكون تسجيله هو المعتمد.</p>
+    <div class="row">
+      <label>التاريخ:</label>
+      <input id="studentDate" type="date" onchange="loadStudentToday()">
+    </div>
+    <br>
+    <div class="row">
+      <label class="choice"><input type="radio" name="studentStatus" value="masjid"> مسجد</label>
+      <label class="choice"><input type="radio" name="studentStatus" value="home"> بيت</label>
+      <label class="choice"><input type="radio" name="studentStatus" value="none"> لم يصلِّ</label>
+      <button onclick="saveStudentRecord()">حفظ تسجيلي</button>
+    </div>
+    <p id="studentRecordMsg" class="small"></p>
+  </div>
+
+  <div class="card">
+    <h2>سجلي</h2>
+    <table>
+      <thead><tr><th>التاريخ</th><th>تسجيلك</th><th>المعتمد</th></tr></thead>
+      <tbody id="studentLog"></tbody>
+    </table>
+  </div>
+</section>
+
+</div>
+<div class="footer">سفراء الفجر — نسخة Firebase</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, collection, getDocs, query, where } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDwZJIG7Pr_9OujnF3D769mMhY5hVvroQg",
+  authDomain: "quran-progress-fdc8b.firebaseapp.com",
+  projectId: "quran-progress-fdc8b",
+  storageBucket: "quran-progress-fdc8b.firebasestorage.app",
+  messagingSenderId: "576918019036",
+  appId: "1:576918019036:web:3983d37227e3c9d4f38d19",
+  measurementId: "G-6BK6F1JVW5"
+};
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getFirestore(app);
+
+const ADMIN_EMAIL = "Mohammedmanasra100@gmail.com";
+
+const initialStudents = [
+  {id:"lobada", name:"محمد أبو لبدة", email:"lobada@sufara.com"},
+  {id:"yamen", name:"يامن أبو صلاح", email:"yamen@sufara.com"},
+  {id:"jawad", name:"جواد أبو سيف", email:"jawad@sufara.com"},
+  {id:"kinan", name:"كنان السري", email:"kinan@sufara.com"},
+  {id:"omar", name:"عمر أبو حمدة", email:"omar@sufara.com"},
+  {id:"abusief", name:"محمد أبو سيف", email:"abusief@sufara.com"}
+];
+
+const labels = {masjid:"مسجد", home:"بيت", none:"لم يصلِّ", empty:"غير مسجل"};
+const pts = {masjid:1, home:0.5, none:0};
+
+let currentStudent = null;
+let students = [];
+let records = [];
+let knights = {};
+
+function todayISO(){
+  const d = new Date();
+  const offset = d.getTimezoneOffset();
+  const local = new Date(d.getTime() - offset*60000);
+  return local.toISOString().slice(0,10);
+}
+function recordId(date, studentId){return `${date}_${studentId}`;}
+function effectiveStatus(r){return r?.adminStatus || r?.studentStatus || "none";}
+function studentOnlyStatus(r){return r?.studentStatus || "empty";}
+
+async function loadStudents(){
+  const snap = await getDocs(collection(db,"students"));
+  students = snap.docs.map(d=>({id:d.id,...d.data()}));
+  students.sort((a,b)=>(a.order||99)-(b.order||99));
+}
+async function loadRecords(){
+  const snap = await getDocs(collection(db,"records"));
+  records = snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+async function loadKnights(){
+  const snap = await getDoc(doc(db,"settings","fajrKnights"));
+  knights = snap.exists() ? snap.data() : {};
+  renderKnightsView();
+}
+function renderKnightsView(){
+  const box = document.getElementById("knightsView");
+  const title = knights.title || "";
+  const imageUrl = knights.imageUrl || "";
+  const names = Array.isArray(knights.names) ? knights.names : [];
+  if(!title && !imageUrl && names.length===0){ box.classList.add("hidden"); return; }
+  box.classList.remove("hidden");
+  document.getElementById("knightsTitle").textContent = title || "فرسان الفجر";
+  const img = document.getElementById("knightsImage");
+  if(imageUrl){ img.src = imageUrl; img.classList.remove("hidden"); } else { img.classList.add("hidden"); }
+  document.getElementById("knightsNames").innerHTML = names.map(n=>`<span class="knightName">🏅 ${n}</span>`).join("");
+}
+function fillKnightsAdmin(){
+  if(!document.getElementById("knightsAdminTitle")) return;
+  document.getElementById("knightsAdminTitle").value = knights.title || "";
+  document.getElementById("knightsAdminImage").value = knights.imageUrl || "";
+  document.getElementById("knightsAdminNames").value = (knights.names || []).join("\n");
+}
+async function getStudentByEmail(email){
+  const q = query(collection(db,"students"), where("email","==",email));
+  const snap = await getDocs(q);
+  if(snap.empty) return null;
+  const d = snap.docs[0];
+  return {id:d.id,...d.data()};
+}
+function summary(studentId){
+  let masjid=0, home=0, none=0, total=0, points=0;
+  records.filter(r=>r.studentId===studentId).forEach(r=>{
+    total++;
+    const s = effectiveStatus(r);
+    if(s==="masjid") masjid++;
+    if(s==="home") home++;
+    if(s==="none") none++;
+    points += pts[s] || 0;
+  });
+  return {masjid,home,none,total,points,ratio:total?Math.round(masjid/total*100):0};
+}
+function startOfWeekSaturday(dateStr){
+  const d = new Date(dateStr+"T00:00:00");
+  const day = d.getDay();
+  const diff = (day+1)%7;
+  d.setDate(d.getDate()-diff);
+  return d;
+}
+function formatISO(d){
+  const offset=d.getTimezoneOffset();
+  const local=new Date(d.getTime()-offset*60000);
+  return local.toISOString().slice(0,10);
+}
+function weeklyMasjid(studentId){
+  const date = document.getElementById("adminDate")?.value || document.getElementById("studentDate")?.value || todayISO();
+  const start = startOfWeekSaturday(date);
+  let count=0;
+  for(let i=0;i<7;i++){
+    const d = new Date(start);
+    d.setDate(start.getDate()+i);
+    const iso = formatISO(d);
+    const r = records.find(x=>x.date===iso && x.studentId===studentId);
+    if(effectiveStatus(r)==="masjid") count++;
+  }
+  return count;
+}
+function rankingArray(){
+  return students.map(s=>({student:s,...summary(s.id)})).sort((a,b)=>b.points-a.points || b.masjid-a.masjid);
+}
+function studentRank(studentId){
+  return rankingArray().findIndex(x=>x.student.id===studentId)+1;
+}
+
+window.login = async function(){
+  document.getElementById("loginMsg").textContent = "";
+  try{
+    await signInWithEmailAndPassword(auth, document.getElementById("email").value.trim(), document.getElementById("password").value);
+  }catch(e){
+    document.getElementById("loginMsg").textContent = "تعذر تسجيل الدخول. تأكد من البريد وكلمة المرور.";
+  }
+}
+window.logout = async function(){await signOut(auth);}
+
+onAuthStateChanged(auth, async user=>{
+  document.getElementById("loginCard").classList.toggle("hidden", !!user);
+  document.getElementById("topBar").classList.toggle("hidden", !user);
+  document.getElementById("adminPanel").classList.add("hidden");
+  document.getElementById("studentPanel").classList.add("hidden");
+  document.getElementById("knightsView").classList.add("hidden");
+  if(!user) return;
+
+  await loadStudents();
+  await loadRecords();
+  await loadKnights();
+
+  if(user.email === ADMIN_EMAIL){
+    document.getElementById("welcome").textContent = "مرحبًا بالمشرف";
+    document.getElementById("adminPanel").classList.remove("hidden");
+    document.getElementById("adminDate").value = todayISO();
+    renderAdmin();
+  }else{
+    currentStudent = await getStudentByEmail(user.email);
+    if(!currentStudent){
+      document.getElementById("welcome").textContent = "هذا الحساب غير مربوط بطالب. اطلب من المشرف تهيئة البيانات.";
+      return;
+    }
+    document.getElementById("welcome").textContent = "مرحبًا " + currentStudent.name;
+    document.getElementById("studentPanel").classList.remove("hidden");
+    document.getElementById("studentDate").value = todayISO();
+    renderStudent();
+  }
+});
+
+window.seedStudents = async function(){
+  if(!confirm("هل تريد تهيئة بيانات الطلاب داخل Firestore؟")) return;
+  for(let i=0;i<initialStudents.length;i++){
+    await setDoc(doc(db,"students",initialStudents[i].id), {
+      name: initialStudents[i].name,
+      email: initialStudents[i].email,
+      note: "",
+      role: "student",
+      order: i+1
+    }, {merge:true});
+  }
+  await loadStudents();
+  renderAdmin();
+  alert("تمت تهيئة بيانات الطلاب");
+}
+
+window.showAdminTab = function(id){
+  ["adminDaily","adminRanking","adminNotes","adminKnights"].forEach(x=>document.getElementById(x).classList.add("hidden"));
+  document.getElementById(id).classList.remove("hidden");
+  if(id==="adminDaily") loadAdminDaily();
+  if(id==="adminRanking") renderAdminRanking();
+  if(id==="adminNotes") renderNotes();
+  if(id==="adminKnights") fillKnightsAdmin();
+}
+function renderAdmin(){loadAdminDaily();renderAdminRanking();renderNotes();fillKnightsAdmin();}
+
+window.loadAdminDaily = function(){
+  const date = document.getElementById("adminDate").value;
+  document.getElementById("adminDailyRows").innerHTML = students.map(s=>{
+    const r = records.find(x=>x.date===date && x.studentId===s.id);
+    const admin = r?.adminStatus || "";
+    const student = studentOnlyStatus(r);
+    return `<tr>
+      <td class="name">${s.name}</td>
+      <td>${labels[student] || labels.empty}</td>
+      <td>
+        <label class="choice"><input type="radio" name="admin_${s.id}" value="masjid" ${admin==="masjid"?"checked":""}> مسجد</label>
+        <label class="choice"><input type="radio" name="admin_${s.id}" value="home" ${admin==="home"?"checked":""}> بيت</label>
+        <label class="choice"><input type="radio" name="admin_${s.id}" value="none" ${admin==="none"?"checked":""}> لم يصلِّ</label>
+        <label class="choice"><input type="radio" name="admin_${s.id}" value="" ${admin===""?"checked":""}> بدون تسجيل مشرف</label>
+      </td>
+    </tr>`;
+  }).join("") || `<tr><td colspan="3">اضغط تهيئة بيانات الطلاب أولًا</td></tr>`;
+}
+
+window.saveAdminDaily = async function(){
+  const date = document.getElementById("adminDate").value;
+  for(const s of students){
+    const input = document.querySelector(`input[name="admin_${s.id}"]:checked`);
+    const adminStatus = input ? input.value : "";
+    const old = records.find(x=>x.date===date && x.studentId===s.id);
+    await setDoc(doc(db,"records",recordId(date,s.id)), {
+      date,
+      studentId:s.id,
+      studentName:s.name,
+      studentStatus:old?.studentStatus || "",
+      adminStatus,
+      updatedAt:new Date().toISOString()
+    }, {merge:true});
+  }
+  await loadRecords();
+  renderAdminRanking();
+  alert("تم حفظ تسجيل المشرف");
+}
+
+window.renderAdminRanking = function(){
+  const by = document.getElementById("rankBy").value;
+  let arr = students.map(s=>({student:s,...summary(s.id)}));
+  arr.sort((a,b)=> by==="masjid" ? (b.masjid-a.masjid || b.points-a.points) : (b.points-a.points || b.masjid-a.masjid));
+  document.getElementById("adminStats").innerHTML = `
+    <div class="stat">عدد الطلاب<b>${students.length}</b></div>
+    <div class="stat">عدد السجلات<b>${records.length}</b></div>
+    <div class="stat">أعلى نقاط<b>${arr[0]?.points || 0}</b></div>`;
+  document.getElementById("adminRankingRows").innerHTML = arr.map((x,i)=>{
+    const w = weeklyMasjid(x.student.id);
+    const badge = w>=4 ? `<span class="badge">🏅 ملتزم</span>` : `<span class="badge danger">أقل من 4</span>`;
+    return `<tr><td>${i+1}</td><td class="name">${x.student.name}</td><td>${x.masjid}/${x.total}</td><td>${x.home}</td><td>${x.none}</td><td>${x.points}</td><td>${badge}</td></tr>`;
+  }).join("");
+}
+
+function renderNotes(){
+  document.getElementById("notesList").innerHTML = students.map(s=>`
+    <div class="card" style="box-shadow:none;border:1px solid var(--line)">
+      <h3>${s.name}</h3>
+      <textarea id="note_${s.id}" placeholder="اكتب ملحوظة للطالب">${s.note || ""}</textarea>
+      <br><br><button onclick="saveNote('${s.id}')">حفظ الملحوظة</button>
+    </div>`).join("") || "اضغط تهيئة بيانات الطلاب أولًا";
+}
+window.saveNote = async function(studentId){
+  const txt = document.getElementById("note_"+studentId).value;
+  await setDoc(doc(db,"students",studentId), {note:txt}, {merge:true});
+  await loadStudents();
+  alert("تم حفظ الملحوظة");
+}
+
+window.saveKnights = async function(){
+  const title = document.getElementById("knightsAdminTitle").value.trim();
+  const imageUrl = document.getElementById("knightsAdminImage").value.trim();
+  const names = document.getElementById("knightsAdminNames").value.split("\n").map(x=>x.trim()).filter(Boolean);
+  await setDoc(doc(db,"settings","fajrKnights"), {title,imageUrl,names,updatedAt:new Date().toISOString()}, {merge:true});
+  await loadKnights();
+  alert("تم حفظ فرسان الفجر");
+}
+
+function renderStudent(){
+  document.getElementById("studentTitle").textContent = "صفحة " + currentStudent.name;
+  const s = summary(currentStudent.id);
+  const rank = studentRank(currentStudent.id);
+  const w = weeklyMasjid(currentStudent.id);
+  document.getElementById("studentStats").innerHTML = `
+    <div class="stat">نقاطك<b>${s.points}</b></div>
+    <div class="stat">الفجر في المسجد<b>${s.masjid}/${s.total}</b></div>
+    <div class="stat">ترتيبك<b>${rank} من ${students.length}</b></div>
+    <div class="stat">وسام الأسبوع<b>${w>=4 ? "🏅 ملتزم" : "يحتاج متابعة"}</b></div>`;
+  document.getElementById("studentNote").textContent = currentStudent.note || "لا توجد ملحوظة حاليًا.";
+  loadStudentToday();
+  renderStudentLog();
+}
+window.loadStudentToday = function(){
+  const date = document.getElementById("studentDate").value;
+  const r = records.find(x=>x.date===date && x.studentId===currentStudent.id);
+  const v = r?.studentStatus || "none";
+  const input = document.querySelector(`input[name="studentStatus"][value="${v}"]`);
+  if(input) input.checked = true;
+  document.getElementById("studentRecordMsg").textContent = r?.adminStatus ? `يوجد تسجيل من المشرف لهذا اليوم، والمعتمد: ${labels[effectiveStatus(r)]}` : "";
+}
+window.saveStudentRecord = async function(){
+  const date = document.getElementById("studentDate").value;
+  const status = document.querySelector(`input[name="studentStatus"]:checked`).value;
+  const old = records.find(x=>x.date===date && x.studentId===currentStudent.id);
+  await setDoc(doc(db,"records",recordId(date,currentStudent.id)), {
+    date,
+    studentId:currentStudent.id,
+    studentName:currentStudent.name,
+    studentStatus:status,
+    adminStatus:old?.adminStatus || "",
+    updatedAt:new Date().toISOString()
+  }, {merge:true});
+  await loadRecords();
+  renderStudent();
+  alert("تم حفظ تسجيلك");
+}
+function renderStudentLog(){
+  document.getElementById("studentLog").innerHTML = records
+    .filter(r=>r.studentId===currentStudent.id)
+    .sort((a,b)=>b.date.localeCompare(a.date))
+    .map(r=>`<tr><td>${r.date}</td><td>${labels[r.studentStatus] || labels.empty}</td><td>${labels[effectiveStatus(r)]}</td></tr>`)
+    .join("") || `<tr><td colspan="3">لا يوجد تسجيل بعد</td></tr>`;
+}
+</script>
+</body>
+</html>
