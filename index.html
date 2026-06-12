@@ -580,54 +580,53 @@ function dailyEncouragement(){
   return messages[dayOfYear % messages.length];
 }
 function awardWeekInfo(){
-  const realNow = new Date();
-  const afterFridayFive = realNow.getDay()===5 && realNow.getHours()>=17;
+  const now = new Date();
+  const afterFridayFive =
+    now.getDay() === 5 && now.getHours() >= 17;
 
-  const now = new Date(realNow);
-  now.setHours(0,0,0,0);
+  let start = startOfWeekSaturday(formatISO(now));
+  start.setHours(0,0,0,0);
 
-  let targetWeek = weekOfMonth(now) - (afterFridayFive ? 0 : 1);
-  let targetMonth = now.getMonth();
-  let targetYear = now.getFullYear();
-
-  if(targetWeek < 1){
-    targetMonth -= 1;
-    if(targetMonth < 0){
-      targetMonth = 11;
-      targetYear -= 1;
-    }
-    targetWeek = weeksInMonth(targetYear, targetMonth);
+  // قبل الجمعة 5 مساءً نعرض الأسبوع السابق المكتمل
+  if(!afterFridayFive){
+    start.setDate(start.getDate() - 7);
   }
 
-  const range = weekRangeInMonth(targetYear, targetMonth, targetWeek);
-  return {
-    start: range.start,
-    end: range.end,
-    weekNo: targetWeek,
-    monthNo: targetMonth + 1,
-    yearNo: targetYear
-  };
-}
-function weekOfMonth(date){
-  const first = new Date(date.getFullYear(), date.getMonth(), 1);
-  first.setHours(0,0,0,0);
-  const daysSinceFirst = Math.floor((date - first) / 86400000);
-  return Math.floor(daysSinceFirst / 7) + 1;
-}
-function weeksInMonth(year, monthIndex){
-  const last = new Date(year, monthIndex + 1, 0);
-  return weekOfMonth(last);
-}
-function weekRangeInMonth(year, monthIndex, weekNo){
-  const start = new Date(year, monthIndex, 1 + (weekNo - 1) * 7);
-  start.setHours(0,0,0,0);
   const end = new Date(start);
   end.setDate(start.getDate() + 6);
-  const monthLast = new Date(year, monthIndex + 1, 0);
-  monthLast.setHours(0,0,0,0);
-  if(end > monthLast) end.setTime(monthLast.getTime());
-  return {start, end};
+  end.setHours(23,59,59,999);
+
+  return {
+    start,
+    end,
+    weekNo: weekNumberFromMonthSaturday(start)
+  };
 }
+
+function weekNumberFromMonthSaturday(date){
+  const firstDay = new Date(
+    date.getFullYear(),
+    date.getMonth(),
+    1
+  );
+
+  firstDay.setHours(0,0,0,0);
+
+  const firstSaturday = new Date(firstDay);
+  const diff = (6 - firstSaturday.getDay() + 7) % 7;
+  firstSaturday.setDate(firstSaturday.getDate() + diff);
+
+  if(date < firstSaturday){
+    return 1;
+  }
+
+  const days =
+    Math.floor((date - firstSaturday) / 86400000);
+
+  return Math.floor(days / 7) + 1;
+}
+}
+
 function weeklyMasjidForRange(studentId,start,end){
   let count=0;
   records.filter(r=>r.studentId===studentId).forEach(r=>{
